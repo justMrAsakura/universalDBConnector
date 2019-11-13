@@ -8,7 +8,6 @@
 #include <sql.h> 
 #include <sqlext.h>
 #include <cstdlib>
-#include <ctime> 
 #include <locale>
 #include <codecvt>
 #include "sqlite3.h"
@@ -30,7 +29,6 @@ using namespace std;
 #ifdef _MSSQL
 	#import "C:\Program Files\Common Files\System\ADO\msado15.dll" rename("EOF", "EndOfFile")
 	using namespace ADODB;
-
 	constexpr int DB_CONNECTION_TIMEOUT = 3;
 
 #endif 
