@@ -1,20 +1,21 @@
-#include "pch.h"
 #include "dbConnector.h"
 
+
+//------------------------------------------------------
+//                    dbSQLITE
+//------------------------------------------------------
 
 dbSQLite::dbSQLite(std::string _dbPath)
 {
 	dbPath = _dbPath;
 }
 
-
-
 dbSQLite::~dbSQLite()
 {
 	sqlite3_close(sdb);
 }
 
-int dbSQLite::connectDb()
+int dbSQLite::ConnectDB()
 {
 	int rc = sqlite3_open(dbPath.c_str(), &sdb);
 
@@ -34,7 +35,7 @@ int The_Callback(void *a_param, int argc, char **argv, char **column) {
 	return 0;
 }
 
-int dbSQLite::execSQL(std::string _SQLQuery)
+int dbSQLite::ExecSQL(std::string _SQLQuery)
 {
 	int erCount;
 	char* error = 0; // buffer f5or error
@@ -62,9 +63,9 @@ std::string dbSQLite::getLastError() {
 
 }
 
-tableVector* dbSQLite::getTableVector(std::string _SQLQuery)
+tableVector* dbSQLite::GetTableVector(std::string _SQLQuery)
 {
-	int rows, columns, rowCtr, colCtr; //rows count , columns count , row control, column control
+	int rows, columns, rowCtr, colCtr; //rows count , columns count , row control, column control 
 	rowCtr = 0; // 0 row - names of colums
 	colCtr = 0;
 	char** results = NULL; // buffer for result
@@ -72,7 +73,7 @@ tableVector* dbSQLite::getTableVector(std::string _SQLQuery)
 	int rc;
 	rc = sqlite3_get_table(sdb, _SQLQuery.c_str(), &results, &rows, &columns, &error); //Executing query
 
-	tableVector *res = new tableVector(rows);
+	tableVector *res = new tableVector(rows); // 
 	
 	if (rc != SQLITE_OK) {
 		listOfErrors.push_back(error);
@@ -116,140 +117,35 @@ tableVector* dbSQLite::getTableVector(std::string _SQLQuery)
 //                    dbMSSQL 
 //------------------------------------------------------
 
-/*
+dbMSSQL::dbMSSQL(const std::string _dbUser, const std::string _dbPass, const std::string _dbAddr, const std::string _dbName) {
 
-class dbMSSQL
-{
-public:
-	std:: string _connString;
-	dbMSSQL() ;
-	int connectDb();
-	int execSQL(std::string _SQLQuery);
-	std::string getErrInfo();
-	resultVector* getTableVector(std::string _SQLQuery);
-	~dbMSSQL();
-private:
-	std::vector<std::string> listOfErrors;
-
-};
-
-
-int rExchange::updateRecordDB(string sqlQuery) {
-
-	writeToLogFile(sqlQuery);
-	_bstr_t strSql = sqlQuery.c_str();
-	try
-	{
-		pConn->Execute(strSql, NULL, adExecuteNoRecords);
-	}
-	catch (_com_error& e)
-	{
-		writeToLogFile(e.ErrorMessage());
-	}
-	return 0;
-}
-
-// function return the pointer to vector<vector><string> result of sql query
-queryRes* rExchange::selectFromDB(string sqlQuery) {
-
-	_RecordsetPtr rec = NULL;
-	queryRes *QueryRes = new queryRes(0);
-
-
-
-	rec.CreateInstance(__uuidof(Recordset));
-	rec->CursorLocation = adUseClient;
-	try
-	{
-		rec->Open(sqlQuery.c_str(), _variant_t((IDispatch*)pConn, true), adOpenStatic, adLockReadOnly, adCmdText);
-	}
-	catch (_com_error &err) {
-		writeToLogFile(err.ErrorMessage());
-		return QueryRes;
-	}
-	FieldsPtr pFields;
-	FieldPtr pField;
-	pFields = rec->Fields;
-	int columnsCount = pFields->Count;
-	int rowsCount = rec->GetRecordCount();
-
-	if (rowsCount == 0) {
-
-		return QueryRes;
-	}
-
-	QueryRes->resize(columnsCount);
-
-	_bstr_t valField2;
-	int j = 0;
-	int i = 0;
-
-	while (i < columnsCount) {
-		rec->MoveFirst();
-		//Loop through the Record set
-		_bstr_t valField1;
-
-		while (!rec->EndOfFile)
-		{
-			try {
-				(*QueryRes)[i].resize(rowsCount);
-
-				if (rec->Fields->GetItem(long(i))->ActualSize != 0)
-				{
-					valField1 = rec->Fields->GetItem(long(i))->Value;
-					(*QueryRes)[i][j] = valField1;
-				}
-				else
-				{
-					(*QueryRes)[i][j] = "NULL";
-				}
-			}
-			catch (_com_error &ce)
-			{
-				cout << ce.ErrorMessage() << endl;
-			}
-
-			rec->MoveNext();
-
-			++j;
-		}
-		j = 0;
-		++i;
-	}
-	return QueryRes;
+	pConn = NULL;
+	CoInitialize(NULL);
+	
+	strConn = "Provider=sqloledb;Data Source=";
+	strConn += _dbAddr;
+	strConn += ";Initial Catalog=";
+	strConn += _dbName;
+	dbUser = _dbUser;
+	dbPassword = _dbPass;
 
 }
 
-
-*/
-
-dbMSSQL::dbMSSQL() {
-
-}
 
 dbMSSQL::~dbMSSQL() {
 
 }
 
-int dbMSSQL::connectDb(const std::string _dbUser, const std::string _dbPass, const std::string _dbAddr, const std::string _dbName) {
-
-	pConn = NULL;
-	CoInitialize(NULL);
-	//strConn = "Provider=sqloledb;Data Source=DEVPC\\SGCTMSSQL;Initial Catalog=sgcServer";
-
-	std:: string strConn = "Provider=sqloledb;Data Source="; 
-	strConn += _dbAddr;
-	strConn += ";Initial Catalog=";
-	strConn += _dbName;
+int dbMSSQL::ConnectDB() {
 
 	try {
 		pConn.CreateInstance(__uuidof(Connection));
 		pConn->ConnectionTimeout = DB_CONNECTION_TIMEOUT;
-		pConn->Open(strConn.c_str(), _dbUser.c_str(), _dbPass.c_str(), adConnectUnspecified);
+		pConn->Open(strConn.c_str(), dbUser.c_str(), dbPassword.c_str(), adConnectUnspecified);
 	}
 	catch (_com_error &err) {
 		listOfErrors.push_back(err.ErrorMessage());
-		exit(1);
+		return(1);
 	}
 
 	pErr = NULL;
@@ -262,14 +158,14 @@ int dbMSSQL::connectDb(const std::string _dbUser, const std::string _dbPass, con
 		{
 			pErr = pConn->Errors->GetItem(i);
 			//printf(" Error number: %x %s", pErr->Number,
-			 listOfErrors.push_back((char*)pErr->Description);
+			listOfErrors.push_back((char*)pErr->Description);
 		}
 	}
-
+	return 0;
 
 }
 
-tableVector* dbMSSQL::getTableVector(const std::string _sqlQuery) {
+tableVector* dbMSSQL::GetTableVector(const std::string _sqlQuery) {
 	_RecordsetPtr rec = NULL;
 	tableVector* QueryRes = new tableVector(0);
 	rec.CreateInstance(__uuidof(Recordset));
@@ -332,7 +228,11 @@ tableVector* dbMSSQL::getTableVector(const std::string _sqlQuery) {
 		++i;
 	}
 	return QueryRes;
+}
 
+int dbMSSQL::ExecSQL(std::string _sqlText) {
+	//release the relealesation
+	return 1;
 }
 
 std::string dbMSSQL::getLastError() {
